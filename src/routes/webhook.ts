@@ -18,28 +18,41 @@ router.post('/', async (req, res) => {
 
   const from = message.from;
   const userMessage = message.text?.body;
-  const prompt = `Patient asks: ${userMessage}\nAnswer with helpful, simple and short response:`;
+  const prompt = `
+You are a hospital admin chatbot assistant.
+Your role is to answer patients' general questions about doctor availability and specialties. 
+Keep answers short, helpful, and friendly. Do NOT provide medical diagnosis or treatment plans.
+If unsure, say "Silakan hubungi bagian administrasi rumah sakit untuk informasi lebih lanjut."
+Patient asks: ${userMessage}
+Answer:`;
 
   let reply;
   try {
     const completion = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: 'You are a helpful assistant for a hospital admin chatbot.' },
-          { role: 'user', content: prompt }
-        ]
+        contents: [
+          {
+            parts: [
+              {
+                text: `You are a helpful assistant for a hospital admin chatbot. ${prompt}`
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 500
+        }
       },
       {
         headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
           'Content-Type': 'application/json'
         }
       }
     );
-    reply = completion.data.choices[0].message.content;
-    console.log('OpenAI API response:', reply);
+    reply = completion.data.candidates[0].content.parts[0].text;
+    console.log('Gemini API response:', reply);
   } catch (e) {
     const err: any = e;
     console.error('LLM Error:', err?.response?.data || err?.message || err);
