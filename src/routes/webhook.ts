@@ -4,6 +4,9 @@ import axios from 'axios';
 
 const router = Router();
 
+// Track processed message IDs to prevent duplicates
+const processedMessages = new Set<string>();
+
 router.post('/', async (req, res) => {
   console.log('--- Incoming webhook ---');
   console.log('Request body:', JSON.stringify(req.body, null, 2));
@@ -14,6 +17,18 @@ router.post('/', async (req, res) => {
     console.log('No message found in webhook payload.');
     return res.sendStatus(200);
   }
+  
+  // Check if we've already processed this message
+  const messageId = message.id;
+  if (processedMessages.has(messageId)) {
+    console.log(`Message ${messageId} already processed, skipping.`);
+    return res.sendStatus(200);
+  }
+  
+  // Add to processed set (with cleanup after 1 hour)
+  processedMessages.add(messageId);
+  setTimeout(() => processedMessages.delete(messageId), 60 * 60 * 1000);
+  
   console.log('Extracted message:', JSON.stringify(message, null, 2));
 
   const from = message.from;
@@ -59,7 +74,12 @@ Answer:`;
     reply = 'Maaf, sedang ada gangguan. Silakan coba lagi nanti.';
   }
 
+  // Send message back via 360dialog
+  let sendSuccess = false;
   try {
+    console.log(`Attempting to send message to ${from}:`, reply);
+    console.log('Using DIALOG360_API_KEY:', process.env.DIALOG360_API_KEY ? 'Present' : 'Missing');
+    
     const sendResult = await axios.post(
       'https://waba-sandbox.360dialog.io/v1/messages',
       {
@@ -76,11 +96,20 @@ Answer:`;
       }
     );
     console.log('360dialog send message response:', sendResult.data);
+    sendSuccess = true;
   } catch (e) {
     const err: any = e;
-    console.error('Sending error:', err?.response?.data || err?.message || err);
+    console.error('Sending error details:');
+    console.error('Status:', err?.response?.status);
+    console.error('Status Text:', err?.response?.statusText);
+    console.error('Response Data:', err?.response?.data);
+    console.error('Error Message:', err?.message);
+    // If sending fails, we should still return 200 to prevent webhook retries
+    // but log the error for debugging
   }
 
+  // Always return 200 to acknowledge receipt, regardless of send success
+  // This prevents WhatsApp from retrying the webhook
   res.sendStatus(200);
 });
 
