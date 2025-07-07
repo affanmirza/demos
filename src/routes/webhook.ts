@@ -1,11 +1,20 @@
 // WhatsApp webhook route: receives messages, processes with LLM, and replies via 360dialog
 import { Router } from 'express';
-import axios from 'axios';
+import { getGeminiResponse, isDoctorInquiry } from '../services/gemini.js';
+import { sendWhatsAppMessageWithRetry } from '../services/whatsapp.js';
+import { storeReview } from '../services/supabase.js';
+import { delay, extractMessageType, generateRandomDoctorName, generateRandomTime } from '../utils/helpers.js';
 
 const router = Router();
 
 // Track processed message IDs to prevent duplicates
 const processedMessages = new Set<string>();
+
+// Track user states for registration flow
+const userStates = new Map<string, {
+  waitingForReview: boolean;
+  registrationCompleted: boolean;
+}>();
 
 router.post('/', async (req, res) => {
   console.log('--- Incoming webhook ---');
@@ -33,84 +42,116 @@ router.post('/', async (req, res) => {
 
   const from = message.from;
   const userMessage = message.text?.body;
-  const prompt = `
-You are a hospital admin chatbot assistant.
-Your role is to answer patients' general questions about doctor availability and specialties. 
-Keep answers short, helpful, and friendly. Do NOT provide medical diagnosis or treatment plans.
-If unsure, say "Silakan hubungi bagian administrasi rumah sakit untuk informasi lebih lanjut."
-Patient asks: ${userMessage}
-Answer:`;
-
-  let reply;
-  try {
-    const completion = await axios.post(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        contents: [
-          {
-            parts: [
-              {
-                text: `You are a helpful assistant for a hospital admin chatbot. ${prompt}`
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 500
-        }
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    reply = completion.data.candidates[0].content.parts[0].text;
-    console.log('Gemini API response:', reply);
-  } catch (e) {
-    const err: any = e;
-    console.error('LLM Error:', err?.response?.data || err?.message || err);
-    reply = 'Maaf, sedang ada gangguan. Silakan coba lagi nanti.';
+  
+  if (!userMessage) {
+    console.log('No text content in message');
+    return res.sendStatus(200);
   }
 
-  // Send message back via 360dialog
-  let sendSuccess = false;
+  // Get user state
+  const userState = userStates.get(from) || {
+    waitingForReview: false,
+    registrationCompleted: false
+  };
+
   try {
-    console.log(`Attempting to send message to ${from}:`, reply);
-    console.log('Using DIALOG360_API_KEY:', process.env.DIALOG360_API_KEY ? 'Present' : 'Missing');
-    
-    const sendResult = await axios.post(
-      'https://waba-sandbox.360dialog.io/v1/messages',
-      {
-        messaging_product: 'whatsapp',
-        to: from,
-        type: 'text',
-        text: { body: reply }
-      },
-      {
-        headers: {
-          'D360-API-KEY': process.env.DIALOG360_API_KEY,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    console.log('360dialog send message response:', sendResult.data);
-    sendSuccess = true;
-  } catch (e) {
-    const err: any = e;
-    console.error('Sending error details:');
-    console.error('Status:', err?.response?.status);
-    console.error('Status Text:', err?.response?.statusText);
-    console.error('Response Data:', err?.response?.data);
-    console.error('Error Message:', err?.message);
-    // If sending fails, we should still return 200 to prevent webhook retries
-    // but log the error for debugging
+    // Handle different message types
+    const messageType = extractMessageType(userMessage);
+    console.log(`Message type: ${messageType}`);
+
+    if (userState.waitingForReview) {
+      // User is providing a review
+      console.log('Processing review from user');
+      await handleReview(from, userMessage);
+      userState.waitingForReview = false;
+      userStates.set(from, userState);
+    } else if (messageType === 'doctor_inquiry' || isDoctorInquiry(userMessage)) {
+      // Handle doctor inquiry
+      console.log('Processing doctor inquiry');
+      await handleDoctorInquiry(from, userMessage);
+    } else if (messageType === 'review') {
+      // Direct review submission
+      console.log('Processing direct review');
+      await handleReview(from, userMessage);
+    } else {
+      // General message - get Gemini response
+      console.log('Processing general message');
+      await handleGeneralMessage(from, userMessage);
+    }
+
+  } catch (error) {
+    console.error('Error processing message:', error);
+    // Send fallback message
+    await sendWhatsAppMessageWithRetry(from, 'Maaf, sedang ada gangguan. Silakan coba lagi nanti.');
   }
 
-  // Always return 200 to acknowledge receipt, regardless of send success
-  // This prevents WhatsApp from retrying the webhook
+  // Always return 200 to acknowledge receipt
   res.sendStatus(200);
 });
+
+async function handleDoctorInquiry(from: string, userMessage: string) {
+  // Get Gemini response for doctor inquiry
+  const geminiResponse = await getGeminiResponse(userMessage, 'doctor_inquiry');
+  
+  // Send initial response
+  await sendWhatsAppMessageWithRetry(from, geminiResponse.text);
+  
+  // Start registration simulation after 15 seconds
+  setTimeout(async () => {
+    await simulateRegistration(from);
+  }, 15000);
+}
+
+async function handleGeneralMessage(from: string, userMessage: string) {
+  // Get Gemini response for general message
+  const geminiResponse = await getGeminiResponse(userMessage, 'general');
+  
+  // Send response
+  await sendWhatsAppMessageWithRetry(from, geminiResponse.text);
+}
+
+async function handleReview(from: string, reviewText: string) {
+  // Store review in Supabase
+  const storedReview = await storeReview(from, reviewText);
+  
+  if (storedReview) {
+    await sendWhatsAppMessageWithRetry(
+      from, 
+      'Terima kasih atas review Anda! Feedback ini sangat berharga untuk meningkatkan pelayanan kami. 🙏'
+    );
+  } else {
+    await sendWhatsAppMessageWithRetry(
+      from, 
+      'Maaf, ada masalah teknis saat menyimpan review Anda. Silakan coba lagi nanti.'
+    );
+  }
+}
+
+async function simulateRegistration(from: string) {
+  const doctorName = generateRandomDoctorName();
+  const appointmentTime = generateRandomTime();
+  
+  // Send registration success message
+  const registrationMessage = `Registrasi berhasil untuk kontrol dengan ${doctorName} jam ${appointmentTime}.`;
+  await sendWhatsAppMessageWithRetry(from, registrationMessage);
+  
+  // Update user state
+  const userState = userStates.get(from) || {
+    waitingForReview: false,
+    registrationCompleted: false
+  };
+  userState.registrationCompleted = true;
+  userStates.set(from, userState);
+  
+  // Wait 5 seconds then ask for feedback
+  await delay(5000);
+  
+  const feedbackMessage = 'Silakan isi review pelayanan kami.';
+  await sendWhatsAppMessageWithRetry(from, feedbackMessage);
+  
+  // Set user state to waiting for review
+  userState.waitingForReview = true;
+  userStates.set(from, userState);
+}
 
 export default router; 

@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "start": "tsx index.ts",
-    "dev": "tsx watch index.ts"
+    "dev": "tsx watch index.ts",
+    "test": "tsx scripts/test-setup.js"
   },
   "dependencies": {
+    "@pinecone-database/pinecone": "^6.1.1",
+    "@supabase/supabase-js": "^2.50.3",
     "axios": "^1.6.7",
     "body-parser": "^1.20.2",
     "dotenv": "^16.3.1",
