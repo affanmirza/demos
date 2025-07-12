@@ -17,7 +17,6 @@ export interface FAQEntry {
   id: string;
   question: string;
   answer: string;
-  category: 'doctor_inquiry' | 'general' | 'review';
   timestamp: Date;
 }
 
@@ -27,24 +26,53 @@ export interface SearchResult {
   score: number;
 }
 
+// Preloaded FAQs for keyword fallback
+const PRELOADED_FAQS = [
+  {
+    question: "Apa jam operasional RS Bhayangkara Brimob?",
+    answer: "Rumah Sakit buka Senin–Jumat pukul 08.00–14.00 dan Sabtu pukul 08.00–12.00.",
+    keywords: ["jam", "operasional", "buka", "rumah sakit", "rs", "jadwal", "waktu"]
+  },
+  {
+    question: "Apakah RS menerima pasien BPJS?",
+    answer: "Ya, kami menerima pasien BPJS sesuai prosedur Mobile JKN.",
+    keywords: ["bpjs", "menerima", "pasien", "asuransi", "jaminan"]
+  },
+  {
+    question: "Bagaimana cara mendaftar poliklinik secara online?",
+    answer: "Anda bisa mendaftar melalui aplikasi Mobile JKN atau aplikasi RS Bhayangkara Brimob.",
+    keywords: ["daftar", "poliklinik", "online", "mendaftar", "pendaftaran", "aplikasi", "mobile jkn"]
+  },
+  {
+    question: "Di mana lokasi pendaftaran pasien rawat jalan?",
+    answer: "Loket pendaftaran pasien rawat jalan berada di Gedung Instalasi Rawat Jalan lantai 1.",
+    keywords: ["lokasi", "pendaftaran", "rawat jalan", "loket", "gedung", "lantai", "dimana"]
+  },
+  {
+    question: "Apakah RS menyediakan layanan UGD 24 jam?",
+    answer: "Ya, kami menyediakan layanan UGD yang beroperasi 24 jam.",
+    keywords: ["ugd", "darurat", "24 jam", "emergency", "gawat darurat", "layanan"]
+  }
+];
+
 export async function initializePinecone() {
   try {
     const pinecone = getPineconeClient();
-    const index = pinecone.index('quickstart');
+    const index = pinecone.index('rs-bhayangkara-faq');
     
     // Test connection by getting index stats
     const stats = await index.describeIndexStats();
     console.log('Pinecone index stats:', stats);
-    console.log('Pinecone initialized successfully');
+    console.log('✅ Pinecone initialized successfully');
     
     return true;
   } catch (error: any) {
     if (error.message?.includes('404') || error.message?.includes('not found')) {
       console.log('⚠️ Pinecone index not found. Please create the index with:');
-      console.log('   - Name: quickstart');
+      console.log('   - Name: rs-bhayangkara-faq');
       console.log('   - Metric: cosine');
-      console.log('   - Dimensions: 768');
-      console.log('   - Model: llama-text-embed-v2');
+      console.log('   - Dimensions: 1024');
+      console.log('   - Model: multilingual-e5-large');
       console.log('   - Cloud: aws');
       console.log('   - Region: us-east-1');
       return false;
@@ -54,19 +82,75 @@ export async function initializePinecone() {
   }
 }
 
+// Preprocess user query for better matching
+function preprocessQuery(query: string): string {
+  return query
+    .toLowerCase()
+    // Replace common abbreviations and variations
+    .replace(/\brs\b/g, "rumah sakit")
+    .replace(/\bdr\b/g, "dokter")
+    .replace(/\bjam\b/g, "jam")
+    .replace(/\boperasional\b/g, "operasional")
+    .replace(/\bbuka\b/g, "buka")
+    .replace(/\bjadwal\b/g, "jadwal")
+    .replace(/\bwaktu\b/g, "waktu")
+    .replace(/\bpoliklinik\b/g, "poliklinik")
+    .replace(/\bdaftar\b/g, "daftar")
+    .replace(/\bmendaftar\b/g, "mendaftar")
+    .replace(/\bpendaftaran\b/g, "pendaftaran")
+    .replace(/\blokasi\b/g, "lokasi")
+    .replace(/\bdimana\b/g, "dimana")
+    .replace(/\bdi mana\b/g, "dimana")
+    .replace(/\bugd\b/g, "ugd")
+    .replace(/\bdarurat\b/g, "darurat")
+    .replace(/\bemergency\b/g, "darurat")
+    .replace(/\bgawat darurat\b/g, "darurat")
+    .replace(/\b24 jam\b/g, "24 jam")
+    .replace(/\bdua puluh empat jam\b/g, "24 jam")
+    // Remove punctuation but keep spaces
+    .replace(/[^\w\s]/gi, ' ')
+    // Remove extra whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Keyword-based fallback search
+function keywordSearch(query: string): SearchResult | null {
+  const cleanedQuery = preprocessQuery(query);
+  const queryWords = cleanedQuery.split(' ');
+  
+  console.log(`🔍 Keyword search for: "${cleanedQuery}"`);
+  
+  for (const faq of PRELOADED_FAQS) {
+    const keywordMatches = faq.keywords.filter(keyword => 
+      queryWords.some(word => word.includes(keyword) || keyword.includes(word))
+    );
+    
+    if (keywordMatches.length >= 2) { // Need at least 2 keyword matches
+      console.log(`✅ Keyword match found: "${faq.question}" (keywords: ${keywordMatches.join(', ')})`);
+      return {
+        question: faq.question,
+        answer: faq.answer,
+        score: 0.8 // High score for keyword matches
+      };
+    }
+  }
+  
+  return null;
+}
+
 export async function storeFAQ(
   question: string, 
-  answer: string, 
-  category: 'doctor_inquiry' | 'general' | 'review'
+  answer: string
 ): Promise<boolean> {
   try {
     const pinecone = getPineconeClient();
-    const index = pinecone.index('quickstart');
+    const index = pinecone.index('rs-bhayangkara-faq');
     
     // Generate a unique ID for this FAQ entry
     const id = `faq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // For now, we'll use a simple hash as embedding (in production, use a proper embedding model)
+    // Generate embedding for the question
     const embedding = generateSimpleEmbedding(question);
     
     // Store in Pinecone
@@ -76,12 +160,11 @@ export async function storeFAQ(
       metadata: {
         question: question,
         answer: answer,
-        category: category,
         timestamp: new Date().toISOString()
       }
     }]);
     
-    console.log('FAQ stored in Pinecone:', { id, question: question.substring(0, 50) + '...' });
+    console.log('✅ FAQ stored in Pinecone:', { id, question: question.substring(0, 50) + '...' });
     return true;
   } catch (error: any) {
     if (error.message?.includes('404') || error.message?.includes('not found')) {
@@ -95,52 +178,78 @@ export async function storeFAQ(
 
 export async function searchSimilarFAQs(
   question: string, 
-  category?: 'doctor_inquiry' | 'general' | 'review',
-  topK: number = 3
+  topK: number = 5
 ): Promise<SearchResult[]> {
   try {
     const pinecone = getPineconeClient();
-    const index = pinecone.index('quickstart');
+    const index = pinecone.index('rs-bhayangkara-faq');
     
-    // Generate embedding for the search query
-    const queryEmbedding = generateSimpleEmbedding(question);
+    // Preprocess the query
+    const preprocessedQuery = preprocessQuery(question);
+    console.log(`🔍 Searching for: "${question}" -> preprocessed: "${preprocessedQuery}"`);
     
-    // Build filter if category is specified
-    const filter = category ? { category: { $eq: category } } : undefined;
+    // Generate a simple embedding for the search query
+    const queryEmbedding = generateSimpleEmbedding(preprocessedQuery);
     
     // Search for similar vectors
     const queryResponse = await index.query({
       vector: queryEmbedding,
       topK: topK,
-      includeMetadata: true,
-      filter: filter
+      includeMetadata: true
     });
     
     const results: SearchResult[] = queryResponse.matches
-      .filter(match => match.score && match.score > 0.7) // Only return good matches
+      .filter(match => match.score && match.score > 0.6) // Lowered threshold for better matching
       .map(match => ({
         question: match.metadata?.question as string,
         answer: match.metadata?.answer as string,
         score: match.score || 0
       }));
     
-    console.log(`Found ${results.length} similar FAQs for: "${question.substring(0, 50)}..."`);
+    console.log(`🔍 Found ${results.length} similar FAQs for: "${question.substring(0, 50)}..."`);
+    
+    // If no good Pinecone matches, try keyword search
+    if (results.length === 0) {
+      console.log('🔍 No Pinecone matches, trying keyword search...');
+      const keywordResult = keywordSearch(question);
+      if (keywordResult) {
+        console.log('✅ Keyword fallback found a match!');
+        return [keywordResult];
+      }
+    }
+    
     return results;
   } catch (error: any) {
     if (error.message?.includes('404') || error.message?.includes('not found')) {
-      console.log('⚠️ Pinecone index not found - no FAQ search performed');
+      console.log('⚠️ Pinecone index not found - trying keyword search...');
+      const keywordResult = keywordSearch(question);
+      if (keywordResult) {
+        console.log('✅ Keyword fallback found a match!');
+        return [keywordResult];
+      }
       return [];
     }
     console.error('Error searching FAQs in Pinecone:', error);
+    
+    // Fallback to keyword search on error
+    console.log('🔍 Pinecone error, trying keyword search...');
+    const keywordResult = keywordSearch(question);
+    if (keywordResult) {
+      console.log('✅ Keyword fallback found a match!');
+      return [keywordResult];
+    }
+    
     return [];
   }
 }
 
-// Simple embedding generation function
-// In production, you'd use a proper embedding model like OpenAI's text-embedding-ada-002
+// Simple embedding generation function for 1024 dimensions
+// Note: This is a simple hash-based embedding for demo purposes
+// In production, you should use proper embedding models or Pinecone's automatic embedding feature
+// when it becomes available in the SDK
 function generateSimpleEmbedding(text: string): number[] {
   const words = text.toLowerCase().split(/\s+/);
-  const embedding = new Array(768).fill(0);
+  const embedding = new Array(1024).fill(0);
   
   // Simple hash-based embedding (not as good as real embeddings, but works for demo)
   words.forEach((word, index) => {
@@ -149,7 +258,7 @@ function generateSimpleEmbedding(text: string): number[] {
       return a & a;
     }, 0);
     
-    const position = Math.abs(hash) % 768;
+    const position = Math.abs(hash) % 1024;
     embedding[position] += 1;
   });
   
@@ -164,43 +273,40 @@ function generateSimpleEmbedding(text: string): number[] {
   return embedding;
 }
 
-export async function seedSampleFAQs() {
-  const sampleFAQs = [
+export async function preloadFAQs() {
+  const preloadedFAQs = [
     {
-      question: "Saya mau tanya jadwal dokter",
-      answer: "Untuk jadwal dokter, spesialisasi apa yang Anda cari? Kami memiliki dokter umum dan spesialis yang tersedia pada jam kerja.",
-      category: "doctor_inquiry" as const
+      question: "Apa jam operasional RS Bhayangkara Brimob?",
+      answer: "Rumah Sakit buka Senin–Jumat pukul 08.00–14.00 dan Sabtu pukul 08.00–12.00."
     },
     {
-      question: "Ada dokter spesialis jantung tidak?",
-      answer: "Ya, kami memiliki dokter spesialis jantung. Dr. Ahmad tersedia pada Senin-Jumat jam 09:00-17:00. Silakan buat janji terlebih dahulu.",
-      category: "doctor_inquiry" as const
+      question: "Apakah RS menerima pasien BPJS?",
+      answer: "Ya, kami menerima pasien BPJS sesuai prosedur Mobile JKN."
     },
     {
-      question: "Berapa biaya konsultasi dokter umum?",
-      answer: "Biaya konsultasi dokter umum adalah Rp 150.000. Untuk informasi lebih detail, silakan hubungi bagian administrasi.",
-      category: "general" as const
+      question: "Bagaimana cara mendaftar poliklinik secara online?",
+      answer: "Anda bisa mendaftar melalui aplikasi Mobile JKN atau aplikasi RS Bhayangkara Brimob."
     },
     {
-      question: "Jam buka rumah sakit?",
-      answer: "Rumah sakit buka 24 jam untuk layanan darurat. Untuk poliklinik umum: Senin-Jumat 08:00-20:00, Sabtu-Minggu 08:00-17:00.",
-      category: "general" as const
+      question: "Di mana lokasi pendaftaran pasien rawat jalan?",
+      answer: "Loket pendaftaran pasien rawat jalan berada di Gedung Instalasi Rawat Jalan lantai 1."
     },
     {
-      question: "Bagaimana cara buat janji dokter?",
-      answer: "Anda bisa membuat janji dokter melalui WhatsApp ini, telepon, atau datang langsung ke bagian administrasi. Kami sarankan booking 1-2 hari sebelumnya.",
-      category: "doctor_inquiry" as const
+      question: "Apakah RS menyediakan layanan UGD 24 jam?",
+      answer: "Ya, kami menyediakan layanan UGD yang beroperasi 24 jam."
     }
   ];
 
   try {
-    for (const faq of sampleFAQs) {
-      await storeFAQ(faq.question, faq.answer, faq.category);
-      console.log('Seeded FAQ:', faq.question.substring(0, 30) + '...');
+    console.log('🚀 Preloading FAQs into Pinecone...');
+    
+    for (const faq of preloadedFAQs) {
+      await storeFAQ(faq.question, faq.answer);
+      console.log('✅ Preloaded FAQ:', faq.question.substring(0, 30) + '...');
     }
     
-    console.log('Sample FAQs seeded successfully');
+    console.log('✅ All FAQs preloaded successfully');
   } catch (error) {
-    console.error('Error seeding sample FAQs:', error);
+    console.error('❌ Error preloading FAQs:', error);
   }
 } 

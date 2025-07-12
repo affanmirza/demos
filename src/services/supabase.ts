@@ -22,127 +22,121 @@ export const supabase = {
   }
 };
 
-export interface Review {
+export interface ChatMessage {
   id?: string;
   wa_id: string;
-  review: string;
+  user_message: string;
+  bot_response: string;
   timestamp?: string;
 }
 
 export async function initializeDatabase() {
   try {
-    // Create reviews table if it doesn't exist
-    const { error } = await supabase.client.rpc('create_reviews_table_if_not_exists');
+    // Create chat_history table if it doesn't exist
+    const { error } = await supabase.client.rpc('create_chat_history_table_if_not_exists');
     
     if (error) {
       console.log('Table creation error (might already exist):', error.message);
       // Try to create table manually if RPC doesn't exist
-      await createReviewsTable();
+      await createChatHistoryTable();
     }
     
-    console.log('Database initialized successfully');
+    console.log('✅ Database initialized successfully');
   } catch (error) {
     console.error('Database initialization error:', error);
   }
 }
 
-async function createReviewsTable() {
+async function createChatHistoryTable() {
   // This is a fallback if the RPC function doesn't exist
   // In production, you'd use proper migrations
-  console.log('Creating reviews table manually...');
+  console.log('Creating chat_history table manually...');
   
   const { error } = await supabase.client
-    .from('reviews')
+    .from('chat_history')
     .select('*')
     .limit(1);
     
   if (error && error.code === 'PGRST116') {
-    console.log('Reviews table does not exist, please create it manually with:');
+    console.log('Chat history table does not exist, please create it manually with:');
     console.log(`
-      CREATE TABLE reviews (
+      CREATE TABLE chat_history (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
         wa_id TEXT NOT NULL,
-        review TEXT NOT NULL,
+        user_message TEXT NOT NULL,
+        bot_response TEXT NOT NULL,
         timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `);
   }
 }
 
-export async function storeReview(waId: string, review: string): Promise<Review | null> {
+export async function storeChatMessage(
+  waId: string, 
+  userMessage: string, 
+  botResponse: string
+): Promise<ChatMessage | null> {
   try {
     const { data, error } = await supabase.client
-      .from('reviews')
+      .from('chat_history')
       .insert({
         wa_id: waId,
-        review: review
+        user_message: userMessage,
+        bot_response: botResponse
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Error storing review:', error);
+      console.error('Error storing chat message:', error);
       return null;
     }
 
-    console.log('Review stored successfully:', data);
-    return data as unknown as Review;
+    console.log('✅ Chat message stored successfully:', { wa_id: data.wa_id, timestamp: data.timestamp });
+    return data as unknown as ChatMessage;
   } catch (error) {
-    console.error('Error storing review:', error);
+    console.error('Error storing chat message:', error);
     return null;
   }
 }
 
-export async function seedSampleReviews() {
-  const sampleReviews = [
-    {
-      wa_id: '628123456789',
-      review: 'Pelayanan sangat baik, dokter ramah dan profesional.'
-    },
-    {
-      wa_id: '628987654321',
-      review: 'Fasilitas bersih dan nyaman, proses pendaftaran cepat.'
-    },
-    {
-      wa_id: '628555666777',
-      review: 'Dokter sangat teliti dalam pemeriksaan, sangat puas dengan pelayanan.'
-    }
-  ];
-
-  try {
-    for (const review of sampleReviews) {
-      const { error } = await supabase.client
-        .from('reviews')
-        .insert(review);
-
-      if (error) {
-        console.error('Error seeding review:', error);
-      } else {
-        console.log('Seeded review for:', review.wa_id);
-      }
-    }
-    
-    console.log('Sample reviews seeded successfully');
-  } catch (error) {
-    console.error('Error seeding sample reviews:', error);
-  }
-}
-
-export async function getReviews(): Promise<Review[]> {
+export async function getChatHistory(waId: string, limit: number = 10): Promise<ChatMessage[]> {
   try {
     const { data, error } = await supabase.client
-      .from('reviews')
+      .from('chat_history')
       .select('*')
-      .order('timestamp', { ascending: false });
+      .eq('wa_id', waId)
+      .order('timestamp', { ascending: false })
+      .limit(limit);
 
     if (error) {
-      console.error('Error fetching reviews:', error);
+      console.error('Error fetching chat history:', error);
       return [];
     }
 
-    return (data || []) as unknown as Review[];
+    return (data || []) as unknown as ChatMessage[];
   } catch (error) {
-    console.error('Error fetching reviews:', error);
+    console.error('Error fetching chat history:', error);
+    return [];
+  }
+}
+
+export async function getAllChatHistory(limit: number = 50): Promise<ChatMessage[]> {
+  try {
+    const { data, error } = await supabase.client
+      .from('chat_history')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching all chat history:', error);
+      return [];
+    }
+
+    return (data || []) as unknown as ChatMessage[];
+  } catch (error) {
+    console.error('Error fetching all chat history:', error);
     return [];
   }
 } 

@@ -1,20 +1,13 @@
-// WhatsApp webhook route: receives messages, processes with LLM, and replies via 360dialog
+// WhatsApp webhook route: receives messages, searches Pinecone for FAQs, and replies
 import { Router } from 'express';
-import { getGeminiResponse, isDoctorInquiry } from '../services/gemini.js';
+import { searchSimilarFAQs } from '../services/pinecone.js';
 import { sendWhatsAppMessageWithRetry } from '../services/whatsapp.js';
-import { storeReview } from '../services/supabase.js';
-import { delay, extractMessageType, generateRandomDoctorName, generateRandomTime } from '../utils/helpers.js';
+import { storeChatMessage } from '../services/supabase.js';
 
 const router = Router();
 
 // Track processed message IDs to prevent duplicates
 const processedMessages = new Set<string>();
-
-// Track user states for registration flow
-const userStates = new Map<string, {
-  waitingForReview: boolean;
-  registrationCompleted: boolean;
-}>();
 
 router.post('/', async (req, res) => {
   console.log('--- Incoming webhook ---');
@@ -48,110 +41,46 @@ router.post('/', async (req, res) => {
     return res.sendStatus(200);
   }
 
-  // Get user state
-  const userState = userStates.get(from) || {
-    waitingForReview: false,
-    registrationCompleted: false
-  };
-
   try {
-    // Handle different message types
-    const messageType = extractMessageType(userMessage);
-    console.log(`Message type: ${messageType}`);
-
-    if (userState.waitingForReview) {
-      // User is providing a review
-      console.log('Processing review from user');
-      await handleReview(from, userMessage);
-      userState.waitingForReview = false;
-      userStates.set(from, userState);
-    } else if (messageType === 'doctor_inquiry' || isDoctorInquiry(userMessage)) {
-      // Handle doctor inquiry
-      console.log('Processing doctor inquiry');
-      await handleDoctorInquiry(from, userMessage);
-    } else if (messageType === 'review') {
-      // Direct review submission
-      console.log('Processing direct review');
-      await handleReview(from, userMessage);
+    console.log(`📱 Processing message from ${from}: "${userMessage}"`);
+    
+    // Search Pinecone for similar FAQs
+    const similarFAQs = await searchSimilarFAQs(userMessage, 3);
+    
+    let botResponse: string;
+    
+    if (similarFAQs.length > 0) {
+      // Found a match (either from Pinecone or keyword fallback)
+      const bestMatch = similarFAQs[0];
+      console.log(`✅ Found FAQ match (score: ${bestMatch.score.toFixed(3)})`);
+      console.log(`Q: ${bestMatch.question}`);
+      console.log(`A: ${bestMatch.answer}`);
+      
+      botResponse = bestMatch.answer;
     } else {
-      // General message - get Gemini response
-      console.log('Processing general message');
-      await handleGeneralMessage(from, userMessage);
+      // No good match found
+      console.log('❌ No good FAQ match found');
+      botResponse = 'Maaf, saya tidak menemukan informasi yang sesuai dengan pertanyaan Anda. Silakan hubungi bagian administrasi rumah sakit untuk informasi lebih lanjut.';
     }
+    
+    // Send response via WhatsApp
+    console.log(`📤 Sending response to ${from}: "${botResponse}"`);
+    await sendWhatsAppMessageWithRetry(from, botResponse);
+    
+    // Store chat message in Supabase for history tracking
+    console.log('💾 Storing chat message in database...');
+    await storeChatMessage(from, userMessage, botResponse);
+    
+    console.log('✅ Message processed successfully');
 
   } catch (error) {
-    console.error('Error processing message:', error);
+    console.error('❌ Error processing message:', error);
     // Send fallback message
-    await sendWhatsAppMessageWithRetry(from, 'Maaf, sedang ada gangguan. Silakan coba lagi nanti.');
+    await sendWhatsAppMessageWithRetry(from, 'Maaf, sedang ada gangguan teknis. Silakan coba lagi nanti.');
   }
 
   // Always return 200 to acknowledge receipt
   res.sendStatus(200);
 });
-
-async function handleDoctorInquiry(from: string, userMessage: string) {
-  // Get Gemini response for doctor inquiry
-  const geminiResponse = await getGeminiResponse(userMessage, 'doctor_inquiry');
-  
-  // Send initial response
-  await sendWhatsAppMessageWithRetry(from, geminiResponse.text);
-  
-  // Start registration simulation after 15 seconds
-  setTimeout(async () => {
-    await simulateRegistration(from);
-  }, 15000);
-}
-
-async function handleGeneralMessage(from: string, userMessage: string) {
-  // Get Gemini response for general message
-  const geminiResponse = await getGeminiResponse(userMessage, 'general');
-  
-  // Send response
-  await sendWhatsAppMessageWithRetry(from, geminiResponse.text);
-}
-
-async function handleReview(from: string, reviewText: string) {
-  // Store review in Supabase
-  const storedReview = await storeReview(from, reviewText);
-  
-  if (storedReview) {
-    await sendWhatsAppMessageWithRetry(
-      from, 
-      'Terima kasih atas review Anda! Feedback ini sangat berharga untuk meningkatkan pelayanan kami. 🙏'
-    );
-  } else {
-    await sendWhatsAppMessageWithRetry(
-      from, 
-      'Maaf, ada masalah teknis saat menyimpan review Anda. Silakan coba lagi nanti.'
-    );
-  }
-}
-
-async function simulateRegistration(from: string) {
-  const doctorName = generateRandomDoctorName();
-  const appointmentTime = generateRandomTime();
-  
-  // Send registration success message
-  const registrationMessage = `Registrasi berhasil untuk kontrol dengan ${doctorName} jam ${appointmentTime}.`;
-  await sendWhatsAppMessageWithRetry(from, registrationMessage);
-  
-  // Update user state
-  const userState = userStates.get(from) || {
-    waitingForReview: false,
-    registrationCompleted: false
-  };
-  userState.registrationCompleted = true;
-  userStates.set(from, userState);
-  
-  // Wait 5 seconds then ask for feedback
-  await delay(5000);
-  
-  const feedbackMessage = 'Silakan isi review pelayanan kami.';
-  await sendWhatsAppMessageWithRetry(from, feedbackMessage);
-  
-  // Set user state to waiting for review
-  userState.waitingForReview = true;
-  userStates.set(from, userState);
-}
 
 export default router; 

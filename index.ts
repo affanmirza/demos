@@ -1,10 +1,10 @@
-// Hospital Chatbot Demo with WhatsApp, Gemini, and Supabase
+// Hospital FAQ Chatbot with WhatsApp and Pinecone
 import express from 'express';
 import bodyParser from 'body-parser';
 import webhookRouter from './src/routes/webhook.ts';
 import { loadEnv } from './src/config/env.ts';
-import { initializeDatabase, seedSampleReviews, getReviews } from './src/services/supabase.js';
-import { initializePinecone, seedSampleFAQs } from './src/services/pinecone.js';
+import { initializeDatabase, getAllChatHistory, getChatHistory } from './src/services/supabase.js';
+import { initializePinecone, preloadFAQs } from './src/services/pinecone.js';
 
 loadEnv();
 
@@ -18,63 +18,51 @@ app.use('/webhook', webhookRouter);
 app.get('/', (req, res) => {
   res.json({
     status: 'ok',
-    message: 'Hospital Chatbot Webhook is running',
+    message: 'Hospital FAQ Chatbot is running',
     endpoints: {
       webhook: '/webhook',
-      reviews: '/reviews',
-      seed: '/seed'
+      chat_history: '/chat-history',
+      chat_history_by_user: '/chat-history/:wa_id'
     }
   });
 });
 
-// View all reviews
-app.get('/reviews', async (req, res) => {
+// View all chat history
+app.get('/chat-history', async (req, res) => {
   try {
-    const reviews = await getReviews();
+    const limit = parseInt(req.query.limit as string) || 50;
+    const chatHistory = await getAllChatHistory(limit);
     res.json({
       success: true,
-      count: reviews.length,
-      reviews: reviews
+      count: chatHistory.length,
+      chat_history: chatHistory
     });
   } catch (error) {
-    console.error('Error fetching reviews:', error);
+    console.error('Error fetching chat history:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch reviews'
+      error: 'Failed to fetch chat history'
     });
   }
 });
 
-// Seed sample reviews
-app.post('/seed', async (req, res) => {
+// View chat history for specific user
+app.get('/chat-history/:wa_id', async (req, res) => {
   try {
-    await seedSampleReviews();
+    const waId = req.params.wa_id;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const chatHistory = await getChatHistory(waId, limit);
     res.json({
       success: true,
-      message: 'Sample reviews seeded successfully'
+      wa_id: waId,
+      count: chatHistory.length,
+      chat_history: chatHistory
     });
   } catch (error) {
-    console.error('Error seeding reviews:', error);
+    console.error('Error fetching user chat history:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to seed reviews'
-    });
-  }
-});
-
-// Seed sample FAQs
-app.post('/seed-faqs', async (req, res) => {
-  try {
-    await seedSampleFAQs();
-    res.json({
-      success: true,
-      message: 'Sample FAQs seeded successfully'
-    });
-  } catch (error) {
-    console.error('Error seeding FAQs:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to seed FAQs'
+      error: 'Failed to fetch user chat history'
     });
   }
 });
@@ -82,28 +70,36 @@ app.post('/seed-faqs', async (req, res) => {
 // Initialize database and start server
 async function startServer() {
   try {
-    console.log('Initializing database...');
+    console.log('🚀 Starting Hospital FAQ Chatbot...');
+    
+    console.log('📊 Initializing database...');
     await initializeDatabase();
     
-    console.log('Initializing Pinecone...');
-    await initializePinecone();
+    console.log('🧠 Initializing Pinecone...');
+    const pineconeInitialized = await initializePinecone();
+    
+    if (pineconeInitialized) {
+      console.log('📚 Preloading FAQs into Pinecone...');
+      await preloadFAQs();
+    } else {
+      console.log('⚠️ Pinecone not initialized - FAQ search will not work');
+    }
     
     app.listen(port, () => {
-      console.log(`🚀 Hospital Chatbot server running at http://localhost:${port}`);
+      console.log(`✅ Hospital FAQ Chatbot server running at http://localhost:${port}`);
       console.log(`📱 Webhook endpoint: http://localhost:${port}/webhook`);
-      console.log(`📊 View reviews: http://localhost:${port}/reviews`);
-      console.log(`🌱 Seed data: POST http://localhost:${port}/seed`);
-      console.log(`🧠 Seed FAQs: POST http://localhost:${port}/seed-faqs`);
+      console.log(`📊 View all chat history: http://localhost:${port}/chat-history`);
+      console.log(`👤 View user chat history: http://localhost:${port}/chat-history/:wa_id`);
       console.log('');
       console.log('📋 Setup Instructions:');
       console.log('1. Use ngrok: ngrok http 3000');
       console.log('2. Register webhook with 360dialog using your ngrok URL');
-      console.log('3. Create Supabase table: reviews (id, wa_id, review, timestamp)');
-      console.log('4. Seed FAQs: POST http://localhost:3000/seed-faqs');
+      console.log('3. Create Supabase table: chat_history (id, wa_id, user_message, bot_response, timestamp)');
+      console.log('4. Create Pinecone index: rs-bhayangkara-faq (1024 dimensions, cosine metric, multilingual-e5-large model)');
       console.log('5. Test with WhatsApp message!');
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 }
