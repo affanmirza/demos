@@ -204,14 +204,13 @@ export async function searchSimilarFAQs(
   question: string, 
   phoneNumber?: string,
   topK: number = PINECONE_CONFIG.topK
-): Promise<SearchResult[]> {
+): Promise<FAQContext[]> {
   try {
     // Preprocess the query
     const preprocessedQuery = preprocessQuery(question);
     console.log(`🔍 Searching for: "${question}" -> preprocessed: "${preprocessedQuery}"`);
     
-    // Step 1: Try Pinecone vector search
-    console.log('🔍 Trying Pinecone vector search...');
+    // Pinecone vector search only
     const pinecone = getPineconeClient();
     const index = pinecone.index(PINECONE_CONFIG.indexName);
     
@@ -225,90 +224,18 @@ export async function searchSimilarFAQs(
       includeMetadata: true
     });
     
-    const pineconeResults = queryResponse.matches
-      .filter(match => match.score && match.score >= PINECONE_CONFIG.similarityThreshold)
+    // Return top-K FAQ candidates (no threshold)
+    const faqCandidates: FAQContext[] = (queryResponse.matches || [])
       .map(match => ({
+        id: match.id,
         question: match.metadata?.question as string,
         answer: match.metadata?.answer as string,
-        score: match.score || 0,
-        source: 'pinecone' as const,
-        faqId: match.id
+        score: match.score || 0
       }));
     
-    console.log(`🔍 Found ${pineconeResults.length} similar FAQs above threshold ${PINECONE_CONFIG.similarityThreshold}`);
-    
-    // Step 2: If we have Pinecone results, use Gemini to select the best one
-    if (pineconeResults.length > 0) {
-      console.log('🤖 Using Gemini to select best FAQ from Pinecone results...');
-      
-      const faqCandidates: FAQContext[] = pineconeResults.map(result => ({
-        id: result.faqId,
-        question: result.question,
-        answer: result.answer,
-        score: result.score
-      }));
-      
-      const geminiResponse = await selectBestFAQ(question, faqCandidates, phoneNumber);
-      
-      if (geminiResponse.selectedFAQId && geminiResponse.confidence > 0.5) {
-        const selectedFAQ = pineconeResults.find(result => result.faqId === geminiResponse.selectedFAQId);
-        if (selectedFAQ) {
-          console.log(`✅ Gemini selected FAQ: "${selectedFAQ.question}" (confidence: ${geminiResponse.confidence.toFixed(3)})`);
-          console.log(`🤖 Reasoning: ${geminiResponse.reasoning}`);
-          
-          // Update conversation context
-          if (phoneNumber) {
-            updateConversationContext(phoneNumber, question, selectedFAQ.faqId);
-          }
-          
-          return [{
-            ...selectedFAQ,
-            source: 'gemini',
-            reasoning: geminiResponse.reasoning
-          }];
-        }
-      } else {
-        console.log(`⚠️ Gemini couldn't select a good FAQ (confidence: ${geminiResponse.confidence.toFixed(3)})`);
-        if (geminiResponse.fallbackReason) {
-          console.log(`🤖 Fallback reason: ${geminiResponse.fallbackReason}`);
-        }
-      }
-    }
-    
-    // Step 3: If Pinecone fails or Gemini can't select, try keyword search
-    console.log('🔍 Trying keyword search fallback...');
-    const keywordResult = keywordSearch(question);
-    if (keywordResult) {
-      console.log('✅ Keyword fallback found a match!');
-      
-      // Update conversation context
-      if (phoneNumber) {
-        updateConversationContext(phoneNumber, question, keywordResult.faqId);
-      }
-      
-      return [keywordResult];
-    }
-    
-    console.log('❌ No suitable FAQ found');
-    return [];
-    
+    return faqCandidates;
   } catch (error: any) {
-    console.error('Error in hybrid search:', error);
-    
-    // Fallback to keyword search on error
-    console.log('🔍 Error occurred, trying keyword search...');
-    const keywordResult = keywordSearch(question);
-    if (keywordResult) {
-      console.log('✅ Keyword fallback found a match!');
-      
-      // Update conversation context
-      if (phoneNumber) {
-        updateConversationContext(phoneNumber, question, keywordResult.faqId);
-      }
-      
-      return [keywordResult];
-    }
-    
+    console.error('Error in Pinecone candidate search:', error);
     return [];
   }
 }

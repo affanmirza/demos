@@ -213,6 +213,51 @@ JAWABAN:`;
   }
 }
 
+/**
+ * RAG-powered answer: builds a context-rich prompt and returns Gemini's final answer.
+ * - Only uses provided FAQs for answers.
+ * - If none are relevant, Gemini must reply with a polite 'Maaf...' message.
+ * - Always preserves user context across turns.
+ */
+export async function answerWithRAG(
+  userQuery: string,
+  faqCandidates: FAQContext[],
+  phoneNumber?: string
+): Promise<string> {
+  try {
+    const genAI = getGeminiClient();
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const context = phoneNumber ? getConversationContext(phoneNumber) : { lastQuery: null, lastFAQId: null };
+
+    // System instruction and RAG prompt
+    let prompt = `You are a helpful hospital chatbot. Answer user questions using ONLY the provided FAQs. If none are relevant, politely say you couldn’t find the answer ('Maaf, saya tidak menemukan informasi yang sesuai...'). Always preserve user context across turns.\n\n`;
+    prompt += `USER QUESTION: "${userQuery}"\n`;
+    if (context.lastQuery) {
+      prompt += `PREVIOUS CONTEXT:\n- Last user question: "${context.lastQuery}"\n- Last selected FAQ ID: ${context.lastFAQId || 'none'}\n`;
+    }
+    prompt += `\nAVAILABLE FAQS (Q&A):\n`;
+    faqCandidates.forEach((faq, idx) => {
+      prompt += `${idx + 1}. Q: ${faq.question}\n   A: ${faq.answer}\n`;
+    });
+    prompt += `\nINSTRUCTIONS:\n- Only answer using the provided FAQs.\n- If none are relevant, reply: 'Maaf, saya tidak menemukan informasi yang sesuai dengan pertanyaan Anda.'\n- If the user is following up, use the previous context.\n- Rephrase the answer naturally for WhatsApp.\n`;
+    prompt += `\nREPLY (in Bahasa Indonesia, for WhatsApp):`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text().trim();
+
+    // Optionally update context (if a FAQ is referenced)
+    // (Could parse for FAQ ID, but for now, just update last query)
+    if (phoneNumber) {
+      updateConversationContext(phoneNumber, userQuery, null);
+    }
+    return text;
+  } catch (error: any) {
+    console.error('❌ Gemini RAG answer error:', error);
+    return 'Maaf, sedang ada gangguan teknis. Silakan coba lagi nanti.';
+  }
+}
+
 export async function testGeminiConnection(): Promise<boolean> {
   try {
     const genAI = getGeminiClient();

@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { searchSimilarFAQs } from '../services/pinecone.js';
 import { sendWhatsAppMessageWithRetry } from '../services/whatsapp.js';
 import { storeChatMessage } from '../services/supabase.js';
+import { answerWithRAG } from '../services/gemini.js';
 
 const router = Router();
 
@@ -44,30 +45,17 @@ router.post('/', async (req, res) => {
   try {
     console.log(`📱 Processing message from ${from}: "${userMessage}"`);
     
-    // Search using hybrid approach (Pinecone + Gemini + Keyword fallback)
-    const similarFAQs = await searchSimilarFAQs(userMessage, from, 3);
+    // 1. Get top-5 FAQ candidates from Pinecone
+    const faqCandidates = await searchSimilarFAQs(userMessage, from, 5);
     
-    let botResponse: string;
+    // 2. Build RAG prompt and get Gemini's answer
+    const botResponse = await answerWithRAG(userMessage, faqCandidates, from);
     
-    if (similarFAQs.length > 0) {
-      // Found a match (either from Pinecone or keyword fallback)
-      const bestMatch = similarFAQs[0];
-      console.log(`✅ Found FAQ match (score: ${bestMatch.score.toFixed(3)}, source: ${bestMatch.source})`);
-      console.log(`Q: ${bestMatch.question}`);
-      console.log(`A: ${bestMatch.answer}`);
-      
-      botResponse = bestMatch.answer;
-    } else {
-      // No good match found
-      console.log('❌ No good FAQ match found');
-      botResponse = 'Maaf, saya tidak menemukan informasi yang sesuai dengan pertanyaan Anda. Silakan hubungi bagian administrasi rumah sakit untuk informasi lebih lanjut.';
-    }
-    
-    // Send response via WhatsApp
+    // 3. Send response via WhatsApp
     console.log(`📤 Sending response to ${from}: "${botResponse}"`);
     await sendWhatsAppMessageWithRetry(from, botResponse);
     
-    // Store chat message in Supabase for history tracking
+    // 4. Store chat message in Supabase for history tracking
     console.log('💾 Storing chat message in database...');
     await storeChatMessage(from, userMessage, botResponse);
     
