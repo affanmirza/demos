@@ -1,0 +1,62 @@
+version: "3.1"
+
+rules:
+  - rule: Greet
+    steps:
+      - intent: greet
+      - action: utter_greet
+
+  - rule: Goodbye
+    steps:
+      - intent: goodbye
+      - action: utter_goodbye
+
+  - rule: FAQ Operating Hours
+    steps:
+      - intent: faq_operating_hours
+      - action: utter_faq_operating_hours
+
+  - rule: FAQ BPJS
+    steps:
+      - intent: faq_bpjs
+      - action: utter_faq_bpjs
+
+  - rule: FAQ Online Registration
+    steps:
+      - intent: faq_online_registration
+      - action: utter_faq_online_registration
+
+  - rule: FAQ Registration Location
+    steps:
+      - intent: faq_registration_location
+      - action: utter_faq_registration_location
+
+  - rule: FAQ Emergency
+    steps:
+      - intent: faq_emergency
+      - action: utter_faq_emergency
+
+  - rule: FAQ Dental
+    steps:
+      - intent: faq_dental
+      - action: utter_faq_dental
+
+  - rule: FAQ Pediatric
+    steps:
+      - intent: faq_pediatric
+      - action: utter_faq_pediatric
+
+  - rule: FAQ Fees
+    steps:
+      - intent: faq_fees
+      - action: utter_faq_fees
+
+  - rule: FAQ General
+    steps:
+      - intent: faq_general
+      - action: utter_faq_general
+
+  - rule: Out of Scope
+    steps:
+      - intent: out_of_scope
+      - action: utter_out_of_scope 

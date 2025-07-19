@@ -2,3 +2,14 @@
 /package-lock.json
 /node_modules
 node_modules/
+
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE
+.idea/
+*.swp
+*.swo
