@@ -1,0 +1,219 @@
+text,label
+jam buka poliklinik apa?,operating_hours
+tempat daftar apa?,registration_location
+aplikasi rumah sakit,online_registration
+lokasi pendaftaran rumah sakit apa?,registration_location
+hari ini buka?,operating_hours
+waktu buka rumah sakit,operating_hours
+pasien bpjs bisa daftar,bpjs_acceptance
+tempat daftar rumah sakit,registration_location
+waktu operasional rs,operating_hours
+rs punya gawat darurat apa?,emergency_services
+asuransi bpjs,bpjs_acceptance
+pendaftaran online rs,online_registration
+dimana pendaftaran,registration_location
+dimana daftar apa?,registration_location
+bpjs berlaku,bpjs_acceptance
+kapan poliklinik buka,operating_hours
+jaminan diterima apa?,bpjs_acceptance
+loket rumah sakit apa?,registration_location
+rs bpjs?,bpjs_acceptance
+dimana daftar rs,registration_location
+apa bpjs?,bpjs_acceptance
+poliklinik buka?,operating_hours
+bpjs di rs apa?,bpjs_acceptance
+tempat daftar rumah sakit apa?,registration_location
+buka hari ini?,operating_hours
+lokasi pendaftaran rumah sakit,registration_location
+terima bpjs apa?,bpjs_acceptance
+rs punya emergency apa?,emergency_services
+bpjs berlaku apa?,bpjs_acceptance
+loket pendaftaran rumah sakit apa?,registration_location
+mendaftar poliklinik online,online_registration
+bpjs diterima rumah sakit?,bpjs_acceptance
+bpjs di rs,bpjs_acceptance
+lokasi pendaftaran apa?,registration_location
+bpjs berlaku?,bpjs_acceptance
+emergency 24 jam apa?,emergency_services
+ada gawat darurat?,emergency_services
+apa rs punya gawat darurat,emergency_services
+loket pendaftaran rs,registration_location
+daftar online apa?,online_registration
+daftar via mobile apa?,online_registration
+rs terima bpjs,bpjs_acceptance
+rumah sakit buka jam berapa,operating_hours
+asuransi diterima,bpjs_acceptance
+ugd ada,emergency_services
+pendaftaran digital rumah sakit,online_registration
+lokasi daftar rs apa?,registration_location
+jaminan kesehatan apa?,bpjs_acceptance
+bpjs bisa?,bpjs_acceptance
+daftar online poliklinik,online_registration
+lokasi daftar rs,registration_location
+layanan gawat darurat,emergency_services
+rs mendukung bpjs,bpjs_acceptance
+pasien bpjs bisa daftar?,bpjs_acceptance
+operasional apa?,operating_hours
+gawat darurat tersedia,emergency_services
+tempat daftar rs apa?,registration_location
+ugd tersedia apa?,emergency_services
+bpjs diterima rs?,bpjs_acceptance
+dimana daftar,registration_location
+jam kerja rumah sakit,operating_hours
+bpjs di rs?,bpjs_acceptance
+kapan poliklinik buka?,operating_hours
+aplikasi rs apa?,online_registration
+loket rumah sakit,registration_location
+pendaftaran digital rs,online_registration
+menerima pasien bpjs,bpjs_acceptance
+aplikasi pendaftaran rs apa?,online_registration
+bpjs diterima apa?,bpjs_acceptance
+asuransi kesehatan?,bpjs_acceptance
+apa rumah sakit punya ugd,emergency_services
+emergency 24 jam,emergency_services
+waktu operasional apa?,operating_hours
+kapan rumah sakit buka,operating_hours
+operasional poliklinik apa?,operating_hours
+jam kerja apa?,operating_hours
+ada ugd?,emergency_services
+pendaftaran online rs apa?,online_registration
+kapan rumah sakit buka?,operating_hours
+asuransi kesehatan apa?,bpjs_acceptance
+punya ugd apa?,emergency_services
+loket pendaftaran rumah sakit,registration_location
+kapan buka?,operating_hours
+layanan emergency rs,emergency_services
+tempat pendaftaran rs,registration_location
+daftar online rumah sakit,online_registration
+waktu buka apa?,operating_hours
+gawat darurat ada?,emergency_services
+aplikasi pendaftaran rs,online_registration
+loket pendaftaran rs apa?,registration_location
+jam buka rumah sakit,operating_hours
+layanan emergency apa?,emergency_services
+asuransi diterima apa?,bpjs_acceptance
+gawat darurat 24 jam,emergency_services
+layanan ugd,emergency_services
+rs mendukung bpjs apa?,bpjs_acceptance
+apakah hari ini buka?,operating_hours
+waktu operasional rs?,operating_hours
+daftar via aplikasi apa?,online_registration
+dimana daftar rs apa?,registration_location
+emergency,emergency_services
+jam kerja rs,operating_hours
+rs punya emergency,emergency_services
+gawat darurat 24 jam apa?,emergency_services
+kapan rs buka?,operating_hours
+dimana daftar rumah sakit,registration_location
+waktu buka rs,operating_hours
+rs menerima bpjs?,bpjs_acceptance
+kapan rumah sakit buka?,operating_hours
+loket pendaftaran,registration_location
+daftar via aplikasi rs apa?,online_registration
+tempat pendaftaran,registration_location
+emergency rs apa?,emergency_services
+aplikasi rumah sakit,online_registration
+waktu operasional rumah sakit?,operating_hours
+mobile jkn,online_registration
+daftar online rs,online_registration
+rs punya gawat darurat,emergency_services
+gawat darurat rs,emergency_services
+pasien bpjs diterima,bpjs_acceptance
+ugd ada?,emergency_services
+bpjs diterima,bpjs_acceptance
+kapan rs buka?,operating_hours
+apa rs punya emergency,emergency_services
+aplikasi rumah sakit apa?,online_registration
+jam buka apa?,operating_hours
+rumah sakit menerima bpjs?,bpjs_acceptance
+mobile jkn apa?,online_registration
+hari ini buka?,operating_hours
+rs punya ugd apa?,emergency_services
+ugd tersedia,emergency_services
+asuransi kesehatan bpjs,bpjs_acceptance
+apa jam buka?,operating_hours
+gawat darurat rs apa?,emergency_services
+jam kerja apa?,operating_hours
+pasien bpjs apa?,bpjs_acceptance
+emergency rs,emergency_services
+gawat darurat tersedia apa?,emergency_services
+pendaftaran digital rumah sakit apa?,online_registration
+waktu buka apa?,operating_hours
+daftar via aplikasi rs,online_registration
+tempat pendaftaran apa?,registration_location
+dimana daftar rumah sakit apa?,registration_location
+jadwal operasional,operating_hours
+apa bpjs?,bpjs_acceptance
+rs buka jam berapa?,operating_hours
+daftar poliklinik online,online_registration
+jam operasional rs,operating_hours
+layanan ugd apa?,emergency_services
+terima bpjs?,bpjs_acceptance
+jadwal buka apa?,operating_hours
+lokasi pendaftaran,registration_location
+pasien bpjs,bpjs_acceptance
+gawat darurat,emergency_services
+kapan poliklinik buka?,operating_hours
+emergency tersedia apa?,emergency_services
+operasional jam berapa,operating_hours
+lokasi pendaftaran rs,registration_location
+tempat pendaftaran rs apa?,registration_location
+apa rs punya ugd,emergency_services
+jaminan bpjs?,bpjs_acceptance
+jaminan bpjs apa?,bpjs_acceptance
+apa terima bpjs?,bpjs_acceptance
+pendaftaran online,online_registration
+rumah sakit buka jam berapa?,operating_hours
+bpjs bisa apa?,bpjs_acceptance
+jam buka rs,operating_hours
+operasional rumah sakit,operating_hours
+jam operasional rs?,operating_hours
+apa rs punya gawat darurat,emergency_services
+daftar via aplikasi,online_registration
+jam kerja poliklinik,operating_hours
+tempat daftar,registration_location
+jaminan kesehatan,bpjs_acceptance
+ada emergency?,emergency_services
+aplikasi rs,online_registration
+layanan gawat darurat apa?,emergency_services
+ugd 24 jam apa?,emergency_services
+ugd ada?,emergency_services
+apakah rs menerima bpjs,bpjs_acceptance
+jam buka poliklinik apa?,operating_hours
+terima bpjs tidak?,bpjs_acceptance
+waktu operasional apa?,operating_hours
+ugd rumah sakit apa?,emergency_services
+tempat daftar rs,registration_location
+layanan emergency rs apa?,emergency_services
+loket rs apa?,registration_location
+jam buka poliklinik,operating_hours
+ugd 24 jam,emergency_services
+lokasi daftar apa?,registration_location
+ugd rumah sakit,emergency_services
+loket rs,registration_location
+operasional poliklinik apa?,operating_hours
+emergency tersedia,emergency_services
+operasional apa?,operating_hours
+terima bpjs tidak?,bpjs_acceptance
+emergency buka apa?,emergency_services
+punya emergency apa?,emergency_services
+jam buka apa?,operating_hours
+poliklinik buka jam berapa?,operating_hours
+ada ugd,emergency_services
+daftar online poliklinik apa?,online_registration
+lokasi pendaftaran rs apa?,registration_location
+rs punya ugd,emergency_services
+aplikasi pendaftaran apa?,online_registration
+aplikasi pendaftaran,online_registration
+pendaftaran digital apa?,online_registration
+pasien bpjs bisa daftar apa?,bpjs_acceptance
+bpjs apa?,bpjs_acceptance
+emergency buka,emergency_services
+menerima bpjs?,bpjs_acceptance
+emergency ada?,emergency_services
+apa jam buka?,operating_hours
+dimana pendaftaran apa?,registration_location
+asuransi kesehatan,bpjs_acceptance
+bpjs apa?,bpjs_acceptance
+punya emergency,emergency_services
+apa terima bpjs?,bpjs_acceptance

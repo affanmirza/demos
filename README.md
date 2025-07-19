@@ -1,29 +1,35 @@
-# Hospital FAQ Chatbot
+# Hospital FAQ Chatbot with Gemini + Pinecone Hybrid Search
 
-A Node.js Express backend that integrates WhatsApp (360dialog), Pinecone vector search, and Supabase for a hospital FAQ chatbot.
+A Node.js Express backend that integrates WhatsApp (360dialog), Pinecone vector search, Supabase, and Gemini AI for intelligent FAQ matching in a hospital chatbot.
 
 ## Features
 
 ✅ **WhatsApp Integration**: Receives messages via 360dialog webhook  
-✅ **FAQ-Based Responses**: Uses Pinecone vector search for intelligent responses  
-✅ **Multi-turn Conversations**: Supports multiple questions in a single session  
-✅ **Preloaded FAQs**: 5 hospital-specific FAQs loaded at startup  
+✅ **Gemini AI Integration**: Uses Gemini for query understanding and FAQ selection  
+✅ **Pinecone Vector Search**: Uses hash-based embeddings compatible with multilingual-e5-large  
+✅ **Multi-turn Conversations**: Supports context-aware follow-up questions  
+✅ **Preloaded FAQs**: 8 hospital-specific FAQs loaded at startup  
 ✅ **Chat History**: Stores all conversations in Supabase for tracking  
 ✅ **Message Deduplication**: Prevents duplicate processing of messages  
 ✅ **Error Handling**: Robust error handling with fallback responses  
 ✅ **Retry Logic**: Automatic retry for failed WhatsApp messages  
+✅ **Hybrid Search**: Pinecone → Gemini → Keyword fallback  
+✅ **No Hallucination**: Returns only preloaded answers, never generates new content  
 
 ## Flow
 
 1. **Patient sends message** → WhatsApp webhook receives it
-2. **Vector search** → Search Pinecone for similar FAQ questions
-3. **Response selection** → Return the best matching answer (score > 0.7)
-4. **Fallback response** → If no good match, send generic response
-5. **Chat storage** → Store conversation in Supabase for history tracking
+2. **Query Preprocessing** → Lowercase, expand abbreviations, remove punctuation
+3. **Pinecone Vector Search** → Find similar FAQs using hash-based embeddings (threshold: 0.65)
+4. **Gemini Selection** → Use Gemini to select the most relevant FAQ from candidates
+5. **Multi-turn Context** → Consider previous conversation context for follow-up questions
+6. **Keyword Fallback** → If vector search fails, use keyword matching
+7. **Response Selection** → Return the exact preloaded answer (no hallucination)
+8. **Chat Storage** → Store conversation in Supabase for history tracking
 
 ## Preloaded FAQs
 
-The system comes with 5 preloaded FAQs about RS Bhayangkara Brimob:
+The system comes with 8 preloaded FAQs about RS Bhayangkara Brimob:
 
 1. **Q:** Apa jam operasional RS Bhayangkara Brimob?  
    **A:** Rumah Sakit buka Senin–Jumat pukul 08.00–14.00 dan Sabtu pukul 08.00–12.00.
@@ -40,6 +46,15 @@ The system comes with 5 preloaded FAQs about RS Bhayangkara Brimob:
 5. **Q:** Apakah RS menyediakan layanan UGD 24 jam?  
    **A:** Ya, kami menyediakan layanan UGD yang beroperasi 24 jam.
 
+6. **Q:** Apakah ada poliklinik gigi?  
+   **A:** Ya, kami menyediakan layanan poliklinik gigi dengan jadwal Senin-Jumat pukul 08.00-12.00.
+
+7. **Q:** Apakah ada poliklinik anak?  
+   **A:** Ya, kami menyediakan layanan poliklinik anak dengan jadwal Senin-Jumat pukul 08.00-12.00.
+
+8. **Q:** Berapa biaya pendaftaran poliklinik?  
+   **A:** Biaya pendaftaran poliklinik bervariasi tergantung jenis poliklinik. Untuk informasi detail, silakan hubungi bagian administrasi.
+
 ## Prerequisites
 
 - Node.js 18+ 
@@ -47,6 +62,7 @@ The system comes with 5 preloaded FAQs about RS Bhayangkara Brimob:
 - 360dialog Sandbox account
 - Supabase account
 - Pinecone account
+- Google AI Studio account (for Gemini API)
 
 ## Setup
 
@@ -66,6 +82,7 @@ PINECONE_API_KEY=your_pinecone_api_key_here
 DIALOG360_API_KEY=your_360dialog_api_key_here
 SUPABASE_URL=your_supabase_url_here
 SUPABASE_API_KEY=your_supabase_anon_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 
 # Server
 PORT=3000
@@ -91,20 +108,27 @@ CREATE TABLE chat_history (
 ### 4. Pinecone Setup
 
 1. Create a Pinecone account at [pinecone.io](https://pinecone.io)
-2. Create an index with these settings:
+2. Use the existing index with these settings:
    - **Name**: rs-bhayangkara-faq
    - **Metric**: cosine
-   - **Dimensions**: 1024
-   - **Model**: multilingual-e5-large
+   - **Dimensions**: 1024 (multilingual-e5-large)
+   - **Cloud**: aws
+   - **Region**: us-east-1
 3. Get your API key from the dashboard
 
-### 5. 360dialog Setup
+### 5. API Keys Setup
 
-1. Create a 360dialog Sandbox account
-2. Get your API key from the dashboard
-3. Note your phone number ID for webhook registration
+1. **Google AI Studio**: Get Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
 
-### 6. Start the Server
+### 6. Preload FAQs (Optional)
+
+You can customize the FAQs by editing `data/faqs.json` and running:
+
+```bash
+npm run preload-faqs
+```
+
+### 7. Start the Server
 
 ```bash
 npm start
@@ -112,16 +136,17 @@ npm start
 
 The server will automatically:
 - Initialize the database
+- Test Gemini connection
 - Connect to Pinecone
-- Preload the 5 FAQs into Pinecone
+- Preload the FAQs into Pinecone
 
-### 7. Expose with ngrok
+### 8. Expose with ngrok
 
 ```bash
 ngrok http 3000
 ```
 
-### 8. Register Webhook
+### 9. Register Webhook
 
 Register your webhook URL with 360dialog:
 
@@ -132,6 +157,10 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --data '{"url": "https://your-ngrok-url.ngrok.io/webhook"}'
 ```
+
+### 10. Test with WhatsApp
+
+Send a message to your 360dialog WhatsApp number!
 
 ## Usage
 
@@ -144,6 +173,18 @@ curl --request POST \
    - Online registration
    - Patient registration location
    - Emergency services
+   - Dental clinic
+   - Pediatric clinic
+   - Registration fees
+
+### Multi-turn Conversations
+
+The system supports context-aware conversations:
+
+1. **User**: "Jam buka rumah sakit?"
+2. **Bot**: "Rumah Sakit buka Senin–Jumat pukul 08.00–14.00 dan Sabtu pukul 08.00–12.00."
+3. **User**: "Kalau poli gigi?" (follow-up question)
+4. **Bot**: "Ya, kami menyediakan layanan poliklinik gigi dengan jadwal Senin-Jumat pukul 08.00-12.00."
 
 ### API Endpoints
 
@@ -152,86 +193,24 @@ curl --request POST \
 - `GET /chat-history` - View all chat history
 - `GET /chat-history/:wa_id` - View chat history for specific user
 
+### Configuration
+
+You can adjust the system behavior by modifying these settings in `src/services/pinecone.ts`:
+
+```typescript
+const PINECONE_CONFIG = {
+  indexName: 'rs-bhayangkara-faq',
+  namespace: 'hospital-faqs',
+  similarityThreshold: 0.65,  // Adjust this for stricter/looser matching
+  topK: 5                     // Number of candidates to send to Gemini
+};
+```
+
 ### Example Conversation
 
 1. **Patient**: "Jam buka rumah sakit?"
 2. **Bot**: "Rumah Sakit buka Senin–Jumat pukul 08.00–14.00 dan Sabtu pukul 08.00–12.00."
-3. **Patient**: "Terima kasih, apakah ada layanan UGD?"
+3. **Patient**: "Ada UGD?"
 4. **Bot**: "Ya, kami menyediakan layanan UGD yang beroperasi 24 jam."
-
-## Project Structure
-
-```
-src/
-├── config/
-│   └── env.ts              # Environment configuration
-├── routes/
-│   └── webhook.ts          # WhatsApp webhook handler
-├── services/
-│   ├── supabase.ts         # Supabase database operations
-│   ├── whatsapp.ts         # WhatsApp message sending
-│   └── pinecone.ts         # Pinecone FAQ storage and search
-└── utils/
-    └── helpers.ts          # Utility functions
-```
-
-## Troubleshooting
-
-### WhatsApp Messages Not Sending
-- Check your `DIALOG360_API_KEY`
-- Verify phone number format (should include country code)
-- Check ngrok tunnel is active
-- Review error logs for specific issues
-
-### Supabase Connection Issues
-- Verify `SUPABASE_URL` and `SUPABASE_API_KEY`
-- Ensure `chat_history` table exists
-- Check network connectivity
-
-### Pinecone Connection Issues
-- Verify `PINECONE_API_KEY`
-- Ensure your Pinecone index exists and is accessible
-- Check index name is `rs-bhayangkara-faq`
-- Verify index dimensions match (768)
-
-### FAQ Search Not Working
-- Check Pinecone index exists and is accessible
-- Verify FAQs were preloaded successfully (check startup logs)
-- Ensure embedding generation is working
-
-### Common Issues
-
-1. **"Missing environment variable"**: Add missing variables to `.env`
-2. **"Table doesn't exist"**: Create the `chat_history` table in Supabase
-3. **"Webhook not receiving messages"**: Check ngrok URL and webhook registration
-4. **"Messages not sending"**: Verify 360dialog API key and phone number format
-5. **"Pinecone index not found"**: Create the `rs-bhayangkara-faq` index in Pinecone
-
-## Development
-
-```bash
-# Development mode with auto-restart
-npm run dev
-
-# View logs
-npm start
-
-# Test endpoints
-curl http://localhost:3000/
-curl http://localhost:3000/chat-history
-curl http://localhost:3000/chat-history/628123456789
-```
-
-## Environment Variables Reference
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `PINECONE_API_KEY` | Pinecone API key | ✅ |
-| `DIALOG360_API_KEY` | 360dialog WhatsApp API key | ✅ |
-| `SUPABASE_URL` | Supabase project URL | ✅ |
-| `SUPABASE_API_KEY` | Supabase anon/public key | ✅ |
-| `PORT` | Server port (default: 3000) | ❌ |
-
-## License
-
-MIT License - feel free to use this for your own projects! 
+5. **Patient**: "Terima BPJS?"
+6. **Bot**: "Ya, kami menerima pasien BPJS sesuai prosedur Mobile JKN." 

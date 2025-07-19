@@ -1,0 +1,56 @@
+text,label
+jadwal buka apa?,operating_hours
+rs mendukung bpjs?,bpjs_acceptance
+rs bpjs,bpjs_acceptance
+layanan emergency,emergency_services
+gawat darurat buka,emergency_services
+daftar via mobile,online_registration
+ugd buka,emergency_services
+rs buka?,operating_hours
+apa rs punya ugd,emergency_services
+punya gawat darurat apa?,emergency_services
+loket pendaftaran apa?,registration_location
+emergency ada,emergency_services
+layanan darurat apa?,emergency_services
+jaminan kesehatan bpjs,bpjs_acceptance
+lokasi daftar,registration_location
+punya ugd,emergency_services
+ugd buka apa?,emergency_services
+pendaftaran online apa?,online_registration
+bpjs diterima?,bpjs_acceptance
+jam operasional rumah sakit?,operating_hours
+ada ugd?,emergency_services
+dimana pendaftaran rs apa?,registration_location
+rumah sakit buka?,operating_hours
+jam operasional apa?,operating_hours
+punya gawat darurat,emergency_services
+jadwal buka rumah sakit,operating_hours
+kapan buka?,operating_hours
+emergency apa?,emergency_services
+asuransi bpjs?,bpjs_acceptance
+apakah hari ini buka?,operating_hours
+pasien bpjs?,bpjs_acceptance
+bpjs bisa digunakan,bpjs_acceptance
+pendaftaran digital,online_registration
+gawat darurat apa?,emergency_services
+layanan darurat,emergency_services
+kapan rs buka,operating_hours
+gawat darurat ada,emergency_services
+jaminan bpjs,bpjs_acceptance
+jaminan diterima?,bpjs_acceptance
+asuransi diterima?,bpjs_acceptance
+jam operasional apa?,operating_hours
+cara daftar online,online_registration
+rumah sakit punya ugd apa?,emergency_services
+operasional poliklinik,operating_hours
+jaminan diterima,bpjs_acceptance
+cara daftar online apa?,online_registration
+asuransi bpjs apa?,bpjs_acceptance
+dimana pendaftaran rs,registration_location
+rs bpjs apa?,bpjs_acceptance
+pendaftaran digital rs apa?,online_registration
+jadwal operasional rs,operating_hours
+daftar online rumah sakit apa?,online_registration
+gawat darurat buka apa?,emergency_services
+apa rs punya emergency,emergency_services
+jaminan kesehatan?,bpjs_acceptance

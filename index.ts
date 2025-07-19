@@ -1,10 +1,12 @@
-// Hospital FAQ Chatbot with WhatsApp and Pinecone
+// Hospital FAQ Chatbot with WhatsApp, Pinecone, and Gemini Hybrid Search
 import express from 'express';
 import bodyParser from 'body-parser';
 import webhookRouter from './src/routes/webhook.ts';
 import { loadEnv } from './src/config/env.ts';
 import { initializeDatabase, getAllChatHistory, getChatHistory } from './src/services/supabase.js';
 import { initializePinecone, preloadFAQs } from './src/services/pinecone.js';
+import { testGeminiConnection } from './src/services/gemini.js';
+import { testEmbeddingConnection } from './src/services/embeddings.js';
 
 loadEnv();
 
@@ -18,7 +20,7 @@ app.use('/webhook', webhookRouter);
 app.get('/', (req, res) => {
   res.json({
     status: 'ok',
-    message: 'Hospital FAQ Chatbot is running',
+    message: 'Hospital FAQ Chatbot with Gemini + Pinecone Hybrid Search is running',
     endpoints: {
       webhook: '/webhook',
       chat_history: '/chat-history',
@@ -70,10 +72,26 @@ app.get('/chat-history/:wa_id', async (req, res) => {
 // Initialize database and start server
 async function startServer() {
   try {
-    console.log('🚀 Starting Hospital FAQ Chatbot...');
+    console.log('🚀 Starting Hospital FAQ Chatbot with Gemini + Pinecone Hybrid Search...');
     
     console.log('📊 Initializing database...');
     await initializeDatabase();
+    
+    console.log('🤖 Testing Gemini connection...');
+    const geminiHealthy = await testGeminiConnection();
+    if (geminiHealthy) {
+      console.log('✅ Gemini API is connected');
+    } else {
+      console.log('⚠️ Gemini API not available - will use fallback methods');
+    }
+    
+    console.log('🔤 Testing OpenAI embeddings...');
+    const embeddingsHealthy = await testEmbeddingConnection();
+    if (embeddingsHealthy) {
+      console.log('✅ OpenAI embeddings are working');
+    } else {
+      console.log('⚠️ OpenAI embeddings not available - will use fallback methods');
+    }
     
     console.log('🧠 Initializing Pinecone...');
     const pineconeInitialized = await initializePinecone();
@@ -95,8 +113,9 @@ async function startServer() {
       console.log('1. Use ngrok: ngrok http 3000');
       console.log('2. Register webhook with 360dialog using your ngrok URL');
       console.log('3. Create Supabase table: chat_history (id, wa_id, user_message, bot_response, timestamp)');
-      console.log('4. Create Pinecone index: rs-bhayangkara-faq (1024 dimensions, cosine metric, multilingual-e5-large model)');
-      console.log('5. Test with WhatsApp message!');
+      console.log('4. Create Pinecone index: rs-bhayangkara-faq (1536 dimensions, cosine metric, text-embedding-3-small)');
+      console.log('5. Set environment variables: GEMINI_API_KEY, OPENAI_API_KEY, PINECONE_API_KEY');
+      console.log('6. Test with WhatsApp message!');
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

@@ -44,15 +44,15 @@ router.post('/', async (req, res) => {
   try {
     console.log(`📱 Processing message from ${from}: "${userMessage}"`);
     
-    // Search Pinecone for similar FAQs
-    const similarFAQs = await searchSimilarFAQs(userMessage, 3);
+    // Search using hybrid approach (Pinecone + Gemini + Keyword fallback)
+    const similarFAQs = await searchSimilarFAQs(userMessage, from, 3);
     
     let botResponse: string;
     
     if (similarFAQs.length > 0) {
       // Found a match (either from Pinecone or keyword fallback)
       const bestMatch = similarFAQs[0];
-      console.log(`✅ Found FAQ match (score: ${bestMatch.score.toFixed(3)})`);
+      console.log(`✅ Found FAQ match (score: ${bestMatch.score.toFixed(3)}, source: ${bestMatch.source})`);
       console.log(`Q: ${bestMatch.question}`);
       console.log(`A: ${bestMatch.answer}`);
       

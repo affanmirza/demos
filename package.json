@@ -6,9 +6,12 @@
   "scripts": {
     "start": "tsx index.ts",
     "dev": "tsx watch index.ts",
-    "test": "tsx scripts/test-setup.js"
+    "test": "tsx scripts/test-setup.js",
+    "test-hybrid": "tsx test_hybrid_search.js",
+    "preload-faqs": "tsx scripts/preload-faqs.ts"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "@pinecone-database/pinecone": "^6.1.1",
     "@supabase/supabase-js": "^2.50.3",
     "axios": "^1.6.7",
