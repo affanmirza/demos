@@ -24,6 +24,13 @@ slots:
     mappings:
       - type: controlled
 
+actions:
+  - action_hospital_faq
+  - action_hospital_faq_optimized
+  - action_conversational
+  - action_optimized_conversational
+  - action_simple_conversational
+
 responses:
   utter_greet:
     - text: "Halo! Saya adalah asisten RS Bhayangkara Brimob. Ada yang bisa saya bantu?"

@@ -4,59 +4,59 @@ rules:
   - rule: Greet
     steps:
       - intent: greet
-      - action: utter_greet
+      - action: action_simple_conversational
 
   - rule: Goodbye
     steps:
       - intent: goodbye
-      - action: utter_goodbye
+      - action: action_simple_conversational
 
   - rule: FAQ Operating Hours
     steps:
       - intent: faq_operating_hours
-      - action: utter_faq_operating_hours
+      - action: action_hospital_faq_optimized
 
   - rule: FAQ BPJS
     steps:
       - intent: faq_bpjs
-      - action: utter_faq_bpjs
+      - action: action_hospital_faq_optimized
 
   - rule: FAQ Online Registration
     steps:
       - intent: faq_online_registration
-      - action: utter_faq_online_registration
+      - action: action_hospital_faq_optimized
 
   - rule: FAQ Registration Location
     steps:
       - intent: faq_registration_location
-      - action: utter_faq_registration_location
+      - action: action_hospital_faq_optimized
 
   - rule: FAQ Emergency
     steps:
       - intent: faq_emergency
-      - action: utter_faq_emergency
+      - action: action_hospital_faq_optimized
 
   - rule: FAQ Dental
     steps:
       - intent: faq_dental
-      - action: utter_faq_dental
+      - action: action_hospital_faq_optimized
 
   - rule: FAQ Pediatric
     steps:
       - intent: faq_pediatric
-      - action: utter_faq_pediatric
+      - action: action_hospital_faq_optimized
 
   - rule: FAQ Fees
     steps:
       - intent: faq_fees
-      - action: utter_faq_fees
+      - action: action_hospital_faq_optimized
 
   - rule: FAQ General
     steps:
       - intent: faq_general
-      - action: utter_faq_general
+      - action: action_hospital_faq_optimized
 
   - rule: Out of Scope
     steps:
       - intent: out_of_scope
-      - action: utter_out_of_scope 
+      - action: action_simple_conversational 
