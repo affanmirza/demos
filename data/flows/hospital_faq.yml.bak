@@ -1,0 +1,68 @@
+version: "3.1"
+
+flows:
+  hospital_faq:
+    description: Hospital FAQ conversation flow
+    name: hospital faq
+    steps:
+      - or:
+          - intent: greet
+          - intent: goodbye
+          - intent: faq_operating_hours
+          - intent: faq_bpjs
+          - intent: faq_online_registration
+          - intent: faq_registration_location
+          - intent: faq_emergency
+          - intent: faq_dental
+          - intent: faq_pediatric
+          - intent: faq_fees
+          - intent: faq_general
+          - intent: out_of_scope
+        next:
+          - if: "intent == 'greet'"
+            then:
+              - action: utter_greet
+                next: END
+          - if: "intent == 'goodbye'"
+            then:
+              - action: utter_goodbye
+                next: END
+          - if: "intent == 'faq_operating_hours'"
+            then:
+              - action: utter_faq_operating_hours
+                next: END
+          - if: "intent == 'faq_bpjs'"
+            then:
+              - action: utter_faq_bpjs
+                next: END
+          - if: "intent == 'faq_online_registration'"
+            then:
+              - action: utter_faq_online_registration
+                next: END
+          - if: "intent == 'faq_registration_location'"
+            then:
+              - action: utter_faq_registration_location
+                next: END
+          - if: "intent == 'faq_emergency'"
+            then:
+              - action: utter_faq_emergency
+                next: END
+          - if: "intent == 'faq_dental'"
+            then:
+              - action: utter_faq_dental
+                next: END
+          - if: "intent == 'faq_pediatric'"
+            then:
+              - action: utter_faq_pediatric
+                next: END
+          - if: "intent == 'faq_fees'"
+            then:
+              - action: utter_faq_fees
+                next: END
+          - if: "intent == 'faq_general'"
+            then:
+              - action: utter_faq_general
+                next: END
+          - else:
+              - action: utter_out_of_scope
+                next: END 

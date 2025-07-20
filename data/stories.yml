@@ -1,0 +1,30 @@
+version: "3.1"
+
+stories:
+  - story: operating hours follow-up
+    steps:
+      - intent: faq_operating_hours
+      - action: action_hospital_faq_optimized
+      - intent: faq_emergency
+      - action: action_hospital_faq_optimized
+
+  - story: clinic inquiry with disambiguation
+    steps:
+      - intent: faq_general
+        entities:
+          - clinic_type: dental
+      - action: action_hospital_faq_optimized
+
+  - story: registration flow
+    steps:
+      - intent: faq_online_registration
+      - action: action_hospital_faq_optimized
+      - intent: faq_registration_location
+      - action: action_hospital_faq_optimized
+
+  - story: BPJS inquiry
+    steps:
+      - intent: faq_bpjs
+      - action: action_hospital_faq_optimized
+      - intent: faq_fees
+      - action: action_hospital_faq_optimized 

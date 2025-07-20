@@ -1,0 +1,167 @@
+version: "3.1"
+
+nlu:
+- intent: greet
+  examples: |
+    - halo
+    - hi
+    - hello
+    - selamat pagi
+    - selamat siang
+    - selamat malam
+    - hai
+    - apa kabar
+    - ada yang bisa dibantu
+
+- intent: goodbye
+  examples: |
+    - selamat tinggal
+    - bye
+    - sampai jumpa
+    - terima kasih
+    - makasih
+    - thanks
+    - thank you
+    - daah
+    - dadah
+
+- intent: faq_operating_hours
+  examples: |
+    - jam buka rumah sakit
+    - jam operasional rs
+    - jam kerja rumah sakit
+    - jam buka rs bhayangkara
+    - jam operasional rs bhayangkara brimob
+    - jam kerja rs
+    - jam buka
+    - jam operasional
+    - jam kerja
+    - buka jam berapa
+    - tutup jam berapa
+    - jam buka sampai jam berapa
+    - jam operasional sampai jam berapa
+
+- intent: faq_bpjs
+  examples: |
+    - apakah rs menerima bpjs
+    - terima bpjs tidak
+    - ada bpjs tidak
+    - bpjs diterima tidak
+    - rs bhayangkara terima bpjs
+    - bpjs
+    - asuransi bpjs
+    - jaminan kesehatan
+    - kartu bpjs
+    - mobile jkn
+
+- intent: faq_online_registration
+  examples: |
+    - cara daftar online
+    - pendaftaran online
+    - daftar poliklinik online
+    - registrasi online
+    - aplikasi pendaftaran
+    - mobile jkn
+    - aplikasi rs bhayangkara
+    - daftar via aplikasi
+    - registrasi via aplikasi
+    - cara mendaftar online
+
+- intent: faq_registration_location
+  examples: |
+    - lokasi pendaftaran
+    - dimana pendaftaran
+    - loket pendaftaran
+    - tempat pendaftaran
+    - lokasi daftar
+    - dimana daftar
+    - loket daftar
+    - tempat daftar
+    - gedung pendaftaran
+    - lantai pendaftaran
+    - lokasi rawat jalan
+
+- intent: faq_emergency
+  examples: |
+    - ada ugd tidak
+    - layanan darurat
+    - emergency
+    - ugd 24 jam
+    - gawat darurat
+    - layanan emergency
+    - ugd
+    - emergency room
+    - ruang gawat darurat
+    - layanan 24 jam
+    - ada emergency tidak
+
+- intent: faq_dental
+  examples: |
+    - ada poliklinik gigi
+    - dokter gigi
+    - klinik gigi
+    - poli gigi
+    - layanan gigi
+    - ada dokter gigi tidak
+    - poliklinik gigi
+    - jadwal dokter gigi
+    - jam buka poli gigi
+    - layanan dental
+
+- intent: faq_pediatric
+  examples: |
+    - ada poliklinik anak
+    - dokter anak
+    - klinik anak
+    - poli anak
+    - layanan anak
+    - ada dokter anak tidak
+    - poliklinik anak
+    - jadwal dokter anak
+    - jam buka poli anak
+    - layanan pediatric
+
+- intent: faq_fees
+  examples: |
+    - berapa biaya pendaftaran
+    - biaya poliklinik
+    - harga pendaftaran
+    - tarif poliklinik
+    - biaya daftar
+    - harga daftar
+    - tarif daftar
+    - biaya layanan
+    - harga layanan
+    - tarif layanan
+    - berapa biaya
+    - berapa harga
+    - berapa tarif
+
+- intent: faq_general
+  examples: |
+    - informasi rs
+    - info rumah sakit
+    - informasi layanan
+    - info layanan
+    - informasi umum
+    - info umum
+    - bantuan
+    - pertanyaan
+    - tanya
+    - informasi
+    - info
+
+- intent: out_of_scope
+  examples: |
+    - resep obat
+    - diagnosa penyakit
+    - konsultasi dokter
+    - jadwal dokter spesialis
+    - biaya operasi
+    - reservasi kamar
+    - booking appointment
+    - janji temu dokter
+    - hasil lab
+    - rontgen
+    - mri
+    - ct scan 
