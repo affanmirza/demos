@@ -20,8 +20,7 @@ class ConversationalAction(Action):
     def initialize_llm(self):
         """Initialize the llama.cpp model"""
         model_paths = [
-            "models/llama-2-7b-chat.gguf",  # Better instruction following
-            "models/phi-2.gguf"  # Fallback to smaller model
+            "models/llama-1b-indo.gguf",  # Better instruction following
         ]
         
         for model_path in model_paths:

@@ -19,7 +19,7 @@ class ActionHospitalFAQ(Action):
     
     def initialize_llm(self):
         """Initialize the llama.cpp model"""
-        model_path = os.getenv("LLAMA_MODEL_PATH", "models/llama-2-7b-chat.gguf")
+        model_path = os.getenv("LLAMA_MODEL_PATH", "models/llama-1b-indo.gguf")
         if os.path.exists(model_path):
             try:
                 self.llm = Llama(

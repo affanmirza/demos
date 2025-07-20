@@ -24,8 +24,7 @@ class OptimizedConversationalAction(Action):
     def initialize_llm(self):
         """Initialize the llama.cpp model with optimizations"""
         model_paths = [
-            "models/phi-2.gguf",  # Primary choice for speed
-            "models/llama-2-7b-chat.gguf"  # Fallback to larger model
+            "models/llama-1b-indo.gguf",  # Primary choice for speed
         ]
         
         for model_path in model_paths:

@@ -8,7 +8,7 @@ import time
 from llama_cpp import Llama
 
 class IndonesianHospitalBot:
-    def __init__(self, model_path="models/llama-2-7b-chat.gguf"):
+    def __init__(self, model_path="models/llama-1b-indo.gguf"):
         """Initialize the Indonesian hospital chatbot"""
         
         print("🔄 Loading Indonesian hospital chatbot...")

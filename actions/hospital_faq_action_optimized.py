@@ -145,31 +145,80 @@ class ActionHospitalFAQOptimized(Action):
         return {}
     
     def generate_llm_response_fast(self, user_message: str, faq: Dict) -> str:
-        """Generate response using llama.cpp with optimized settings for speed"""
+        """Generate response using llama.cpp with optimized settings for speed and accuracy"""
         try:
-            # Simple, short prompt for faster generation
-            prompt = f"""Question: {user_message}
-Context: {faq.get('question', '')}
-Answer: {faq.get('answer', '')}
+            # Load the prompt template
+            try:
+                with open("models/indonesian-prompt-template.txt", "r", encoding="utf-8") as f:
+                    prompt_template = f.read()
+            except:
+                # Fallback template if file not found
+                prompt_template = """Anda adalah asisten rumah sakit yang membantu pasien dengan informasi yang akurat dan terpercaya.
 
-Provide a helpful response in Indonesian:"""
+PENTING: 
+- JANGAN BERHALUSINASI atau memberikan informasi yang tidak ada dalam data yang diberikan
+- HANYA gunakan informasi yang tersedia dalam konteks yang diberikan
+- Jika informasi tidak tersedia, katakan "Maaf, saya tidak memiliki informasi tersebut"
+- Berikan jawaban yang singkat, jelas, dan dalam bahasa Indonesia yang sopan
 
-            # Ultra-fast generation settings
+Konteks Informasi Rumah Sakit:
+{context}
+
+Pertanyaan Pasien: {question}
+
+Jawaban:"""
+
+            # Create context from FAQ data
+            context = f"Pertanyaan: {faq.get('question', '')}\nJawaban: {faq.get('answer', '')}"
+            
+            # Format prompt with context and question
+            prompt = prompt_template.format(
+                context=context,
+                question=user_message
+            )
+
+            # Ultra-fast generation settings with strict accuracy
             response = self.llm(
                 prompt,
-                max_tokens=80,      # Very short responses for speed
-                temperature=0.1,    # Low temperature for focused responses
-                top_p=0.8,          # Lower top_p for faster generation
-                top_k=20,           # Lower top_k for speed
-                repeat_penalty=1.1, # Prevent repetition
-                stop=["\n\n", "Question:", "Context:", "Answer:"]
+                max_tokens=100,      # Short responses for speed
+                temperature=0.1,     # Very low temperature for accuracy (no hallucinations)
+                top_p=0.8,           # Lower top_p for focused responses
+                top_k=20,            # Lower top_k for accuracy
+                repeat_penalty=1.1,  # Prevent repetition
+                stop=["\n\n", "Instruksi:", "Konteks:", "Pertanyaan:", "Question:", "Context:"]
             )
             
             generated_text = response['choices'][0]['text'].strip()
             
-            # If response is empty or too short, fallback
+            # If response is empty or too short, fallback to FAQ answer
             if not generated_text or len(generated_text) < 10:
                 return faq.get('answer', 'Maaf, saya tidak dapat membantu dengan pertanyaan tersebut.')
+            
+            # Check if response contains hallucinated information
+            # If it's too different from the FAQ answer, use the FAQ answer
+            faq_answer = faq.get('answer', '').lower()
+            generated_lower = generated_text.lower()
+            
+            # Enhanced hallucination detection
+            hallucination_indicators = [
+                len(generated_text) > len(faq_answer) * 1.5,  # Too long
+                "informasi yang tersedia" in generated_lower and len(generated_text) > 50,  # Generic long response
+                "untuk mendaftar" in generated_lower and "bpjs" in user_message.lower(),  # BPJS registration hallucination
+                "sentimeter" in generated_lower,  # Nonsensical units
+                "per jam" in generated_lower and "biaya" in user_message.lower(),  # Wrong pricing format
+            ]
+            
+            if any(hallucination_indicators):
+                print(f"⚠️  Hallucination detected, using FAQ answer")
+                return faq.get('answer', 'Maaf, saya tidak dapat membantu dengan pertanyaan tersebut.')
+            
+            # Check if response contains key information from FAQ
+            faq_keywords = faq.get('keywords', [])
+            if faq_keywords:
+                found_keywords = [kw for kw in faq_keywords if kw.lower() in generated_lower]
+                if not found_keywords and len(generated_text) > 20:
+                    print(f"⚠️  No FAQ keywords found in response, using FAQ answer")
+                    return faq.get('answer', 'Maaf, saya tidak dapat membantu dengan pertanyaan tersebut.')
             
             return generated_text
             
