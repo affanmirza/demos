@@ -25,9 +25,7 @@ slots:
       - type: controlled
 
 actions:
-  - action_hospital_faq
   - action_hospital_faq_optimized
-  - action_conversational
   - action_optimized_conversational
   - action_simple_conversational
 
@@ -37,36 +35,6 @@ responses:
 
   utter_goodbye:
     - text: "Terima kasih telah menghubungi RS Bhayangkara Brimob. Semoga hari Anda menyenangkan!"
-
-  utter_faq_operating_hours:
-    - text: "Rumah Sakit buka Senin–Jumat pukul 08.00–14.00 dan Sabtu pukul 08.00–12.00."
-
-  utter_faq_bpjs:
-    - text: "Ya, kami menerima pasien BPJS sesuai prosedur Mobile JKN."
-
-  utter_faq_online_registration:
-    - text: "Anda bisa mendaftar melalui aplikasi Mobile JKN atau aplikasi RS Bhayangkara Brimob."
-
-  utter_faq_registration_location:
-    - text: "Loket pendaftaran pasien rawat jalan berada di Gedung Instalasi Rawat Jalan lantai 1."
-
-  utter_faq_emergency:
-    - text: "Ya, kami menyediakan layanan UGD yang beroperasi 24 jam."
-
-  utter_faq_dental:
-    - text: "Ya, kami menyediakan layanan poliklinik gigi dengan jadwal Senin-Jumat pukul 08.00-12.00."
-
-  utter_faq_pediatric:
-    - text: "Ya, kami menyediakan layanan poliklinik anak dengan jadwal Senin-Jumat pukul 08.00-12.00."
-
-  utter_faq_fees:
-    - text: "Biaya pendaftaran poliklinik bervariasi tergantung jenis poliklinik. Untuk informasi detail, silakan hubungi bagian administrasi."
-
-  utter_faq_general:
-    - text: "Untuk informasi lebih lanjut, silakan hubungi bagian administrasi RS Bhayangkara Brimob."
-
-  utter_out_of_scope:
-    - text: "Maaf, saya tidak dapat membantu dengan pertanyaan tersebut. Silakan hubungi bagian administrasi untuk informasi lebih lanjut."
 
 session_config:
   session_expiration_time: 60

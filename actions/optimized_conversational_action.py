@@ -316,14 +316,14 @@ Jawab dengan natural dalam bahasa Indonesia menggunakan informasi di atas. Ramah
     def find_relevant_faq(self, intent: str, user_message: str) -> Dict:
         """Find relevant FAQ based on intent and user message"""
         intent_to_faq = {
-            'faq_operating_hours': 1,
-            'faq_bpjs': 2,
-            'faq_online_registration': 3,
-            'faq_registration_location': 4,
-            'faq_emergency': 5,
-            'faq_dental': 6,
-            'faq_pediatric': 7,
-            'faq_fees': 8
+            'faq_operating_hours': 'faq_operating_hours',
+            'faq_bpjs': 'faq_bpjs',
+            'faq_online_registration': 'faq_online_registration',
+            'faq_registration_location': 'faq_registration_location',
+            'faq_emergency': 'faq_emergency',
+            'faq_dental': 'faq_dental',
+            'faq_pediatric': 'faq_pediatric',
+            'faq_fees': 'faq_fees'
         }
         
         if intent in intent_to_faq:
