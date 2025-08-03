@@ -1,0 +1,41 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - faq_operating_hours
+  - faq_bpjs
+  - faq_online_registration
+  - faq_registration_location
+  - faq_emergency
+  - faq_dental
+  - faq_pediatric
+  - faq_fees
+  - faq_general
+  - out_of_scope
+
+entities:
+  - clinic_type
+  - service_type
+
+slots:
+  return_value:
+    type: any
+    mappings:
+      - type: controlled
+
+actions:
+  - action_hospital_faq_optimized
+  - action_optimized_conversational
+  - action_simple_conversational
+
+responses:
+  utter_greet:
+    - text: "Halo! Saya adalah asisten RS Bhayangkara Brimob. Ada yang bisa saya bantu?"
+
+  utter_goodbye:
+    - text: "Terima kasih telah menghubungi RS Bhayangkara Brimob. Semoga hari Anda menyenangkan!"
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true 
